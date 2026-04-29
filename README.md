@@ -18,6 +18,7 @@
 
 ```text
 .
+├── .env.example           # 环境变量模板
 ├── test_stream_speed.py   # 主测试脚本
 ├── requirements.txt       # Python 依赖
 └── .gitignore
@@ -38,7 +39,11 @@ pip install -r requirements.txt
 
 ## 环境变量配置
 
-脚本会从 `.env` 中读取以下配置：
+复制 `.env.example` 并填写实际配置：
+
+```bash
+cp .env.example .env
+```
 
 ```env
 API_KEY=your_api_key
@@ -51,8 +56,6 @@ MODEL=your-model-name
 - `API_KEY`：接口密钥
 - `BASE_URL`：OpenAI 兼容服务地址
 - `MODEL`：要测试的模型名称
-
-你可以直接新建 `.env` 文件并填入上述内容。
 
 ## 使用方法
 
