@@ -80,7 +80,7 @@ python test_stream_speed.py --max-tokens 800
 自定义测试次数：
 
 ```bash
-python test_stream_speed.py --num-tests 10
+python test_stream_speed.py --num-tests 3
 ```
 
 组合使用：
