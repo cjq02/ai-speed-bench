@@ -18,9 +18,9 @@
 
 ```text
 .
-├── .env.example           # 环境变量模板
-├── test_stream_speed.py   # 主测试脚本
-├── requirements.txt       # Python 依赖
+├── config.yml              # 供应商 API 配置（api_key / base_url / models）
+├── test_stream_speed.py    # 主测试脚本
+├── requirements.txt        # Python 依赖
 └── .gitignore
 ```
 
@@ -37,56 +37,54 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## 环境变量配置
+## 配置文件 (`config.yml`)
 
-复制 `.env.example` 并填写实际配置：
+在 `config.yml` 中配置要测试的供应商和模型，格式如下：
 
-```bash
-cp .env.example .env
+```yaml
+供应商名称:
+  api_key: your_api_key
+  base_url: https://your-openai-compatible-endpoint/v1
+  models:
+    - model-name-1
+    - model-name-2
 ```
 
-```env
-API_KEY=your_api_key
-BASE_URL=https://your-openai-compatible-endpoint/v1
-MODEL=your-model-name
-```
+`test_stream_speed.py` 通过 `--model` 参数匹配 `config.yml` 中各供应商 `models` 列表，自动确定使用的 `api_key` 和 `base_url`。
 
-字段说明：
-
-- `API_KEY`：接口密钥
-- `BASE_URL`：OpenAI 兼容服务地址
-- `MODEL`：要测试的模型名称
+请勿将包含真实 API Key 的 `config.yml` 提交到版本控制中。建议将 `config.yml` 加入 `.gitignore` 或使用环境变量管理密钥。
 
 ## 使用方法
 
-默认运行：
+`--model` 是必选参数，模型名称需在 `config.yml` 中注册：
 
 ```bash
-python test_stream_speed.py
+python test_stream_speed.py --model deepseek-v4-flash
 ```
 
 自定义提示词：
 
 ```bash
-python test_stream_speed.py --prompt "请用 500 字解释 Transformer 的核心思想"
+python test_stream_speed.py --model deepseek-v4-flash --prompt "请用 500 字解释 Transformer 的核心思想"
 ```
 
 自定义最大输出 token 数：
 
 ```bash
-python test_stream_speed.py --max-tokens 800
+python test_stream_speed.py --model deepseek-v4-flash --max-tokens 800
 ```
 
 自定义测试次数：
 
 ```bash
-python test_stream_speed.py --num-tests 3
+python test_stream_speed.py --model deepseek-v4-flash --num-tests 3
 ```
 
 组合使用：
 
 ```bash
 python test_stream_speed.py \
+  --model deepseek-v4-flash \
   --prompt "请生成一篇介绍深度学习原理的短文" \
   --max-tokens 500 \
   --num-tests 5
@@ -152,14 +150,14 @@ token_count / total_duration
 - 用输出事件数量近似 `token_count`
 - 对多次测试结果取平均值，并输出标准差
 
-需要注意：这里的 `token_count` 实际上是“收到的有效流式片段数量”，不一定严格等于模型 tokenizer 意义上的真实 token 数。因此这个脚本更适合做相对对比测试，而不是精确计费统计。
+需要注意：这里的 `token_count` 实际上是"收到的有效流式片段数量"，不一定严格等于模型 tokenizer 意义上的真实 token 数。因此这个脚本更适合做相对对比测试，而不是精确计费统计。
 
 ## 依赖
 
 `requirements.txt` 当前包含：
 
 - `openai`
-- `python-dotenv`
+- `pyyaml`
 
 ## 注意事项
 

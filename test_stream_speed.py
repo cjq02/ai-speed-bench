@@ -1,17 +1,10 @@
 #!/usr/bin/env python3
-"""Qwen3.6-27B 客户端流式请求速度测试"""
+"""客户端流式请求速度测试"""
 
 import time
 import statistics
-from dotenv import load_dotenv
+import yaml
 from openai import OpenAI
-
-load_dotenv()
-
-import os
-API_KEY = os.environ["API_KEY"]
-BASE_URL = os.environ["BASE_URL"]
-MODEL = os.environ["MODEL"]
 
 
 def single_test(client, model, prompt, max_tokens=500):
@@ -33,7 +26,7 @@ def single_test(client, model, prompt, max_tokens=500):
 
     for chunk in response:
         delta = chunk.choices[0].delta
-        has_content = delta.content or getattr(delta, "reasoning", None)
+        has_content = delta.content or getattr(delta, "reasoning_content", None)
         if has_content:
             now = time.perf_counter()
             token_count += 1
@@ -52,9 +45,9 @@ def single_test(client, model, prompt, max_tokens=500):
     return token_count, duration, ttft, per_token_times
 
 
-def test_speed(model, prompt, max_tokens=500, num_tests=5):
+def test_speed(api_key, base_url, model, prompt, max_tokens=500, num_tests=5):
     """多次测试取平均值"""
-    client = OpenAI(api_key=API_KEY, base_url=BASE_URL)
+    client = OpenAI(api_key=api_key, base_url=base_url)
 
     speeds = []
     ttfss = []
@@ -103,6 +96,9 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="流式请求速度测试")
     parser.add_argument(
+        "--model", required=True, help="模型名称，例如 deepseek-v4-flash"
+    )
+    parser.add_argument(
         "--prompt",
         default="请生成一篇500字的短文，介绍深度学习的原理。",
         help="测试提示词",
@@ -115,8 +111,23 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
+    with open("config.yml") as f:
+        config = yaml.safe_load(f)
+
+    provider_cfg = None
+    for provider, cfg in config.items():
+        if args.model in cfg["models"]:
+            provider_cfg = cfg
+            break
+
+    if provider_cfg is None:
+        print(f"错误: 未找到模型 '{args.model}' 的配置")
+        exit(1)
+
     test_speed(
-        model=MODEL,
+        api_key=provider_cfg["api_key"],
+        base_url=provider_cfg["base_url"],
+        model=args.model,
         prompt=args.prompt,
         max_tokens=args.max_tokens,
         num_tests=args.num_tests,
